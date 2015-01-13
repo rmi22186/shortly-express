@@ -2,6 +2,7 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
+var bcrypt = require('bcrypt-nodejs');
 
 
 var db = require('./app/config');
@@ -45,20 +46,18 @@ app.post('/login',function(req, res) {
   var password=req.body.password;
   //check for validity
   //if credentials work
-  db.knex('users')
-    .where('username', '=', username)
-    .where('password', '=', password)
-    .then(function(result) {
-      //figure out error
-      res.redirect('/');
+
+  //work on this tomorrow!!!
+  new User({username: username}).fetch().then(function(found){
+    bcrypt.compare(password, found.hash, function(err, result) {
+      if (result) {
+        res.redirect('/');
+      } else {
+        res.render('login');
+      }
     });
-
-    //redirect to URL page
-  //else
-    //try again...
-
+  });
 });
-
 
 app.get('/signup',function(req,res){
   console.log(req.body);
@@ -66,33 +65,35 @@ app.get('/signup',function(req,res){
 });
 
 app.post('/signup',function(req,res){
-  console.log(req.body);
   var username=req.body.username;
   var password=req.body.password;
   //check for validity
 
-  new User({ username: username, password: password }).fetch().then(function(found) {
-    if (found) {
-      res.send(200, found.attributes);
-    } else {
-      var user = new User({
-        username: username,
-        password: password
-      });
-
-      user.save().then(function(newUser) {
-        Users.add(newUser);
-        var token=new Token();
-        token.set('user_id',newUser.id);
-        token.save().then(function(token){
-          Tokens.add(token);
-          res.send(200, token.attributes.token);
+  //create a new user, check is user was found
+  new User({
+      username: username
+    }).fetch().then(function(found) {
+      if (found) {
+        res.send(200, found.attributes);
+      } else {
+        var user = new User({
+          username: username,
+          password: password
         });
-      });
-    }
-  });
 
-  res.render('signup');
+        user.save().then(function(newUser) {
+          Users.add(newUser);
+          var token=new Token();
+          token.set('user_id',newUser.id);
+          token.save().then(function(token){
+            Tokens.add(token);
+            res.render('login');
+          });
+        });
+      }
+    });
+
+  res.render('login');
 });
 
 app.get('/links',
