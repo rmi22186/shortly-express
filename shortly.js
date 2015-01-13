@@ -1,4 +1,6 @@
 var express = require('express');
+// var cookieparser = require('cookieparser');
+var session = require('express-session');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
@@ -24,19 +26,34 @@ app.use(bodyParser.json());
 // Parse forms (signup/login)
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
+// app.use(cookieparser());
+app.use(session({
+  secret: 'ryanandzacharenotawesome',
+  resave: false,
+  saveUninitialized: true
+}));
 
 
-app.get('/',
-function(req, res) {
+//restrict function to redirect user to login page if page is restricted
+function restrict(req, res, next) {
+  if (req.session.user) {
+    next();
+  } else {
+    req.session.error = 'Access denied!';
+    res.redirect('/login');
+  }
+}
+
+app.get('/', restrict, function(req, res) {
   res.render('index');
 });
 
-app.get('/create',
-function(req, res) {
+app.get('/create', restrict, function(req, res) {
   res.render('index');
 });
 
 //login get route set by using (i think?) the login partial injected into index.ejs in the uniquely-named login id
+
 app.get('/login',function(req,res){
   res.render('login');
 });
@@ -45,68 +62,68 @@ app.post('/login',function(req, res) {
   var username=req.body.username;
   var password=req.body.password;
   //check for validity
-  //if credentials work
-
-  //work on this tomorrow!!!
-  new User({username: username}).fetch().then(function(found){
-    bcrypt.compare(password, found.hash, function(err, result) {
-      if (result) {
-        res.redirect('/');
-      } else {
-        res.render('login');
-      }
+  //modified to incorporate .catch if found does not exist to adhere to best practices of bookshelf
+  new User({username: username}).fetch({require: true})
+    .then(function(found){
+        bcrypt.compare(password, found.attributes.password, function(err, result) {
+          if (result) {
+            req.session.regenerate(function(){
+              req.session.user = username;
+              res.redirect('/');
+            });
+          } else {
+            //throw error message to user to try again
+            console.log('wrooooong password or log in!');
+            res.render('login');
+          }
+        });
+      })
+    .catch(function() {
+      res.render('login');
     });
+});
+
+app.get('/logout', function(request, response){
+  request.session.destroy(function(){
+    response.redirect('/login');
   });
 });
 
 app.get('/signup',function(req,res){
-  console.log(req.body);
   res.render('signup');
 });
 
+//modified to incorporate .catch if found does not exist to adhere to best practices of bookshelf
 app.post('/signup',function(req,res){
   var username=req.body.username;
   var password=req.body.password;
   //check for validity
-
   //create a new user, check is user was found
   new User({
       username: username
     }).fetch().then(function(found) {
-      if (found) {
-        res.send(200, found.attributes);
-      } else {
+        res.send(200, 'please choose a different username!');
+      })
+      .catch(function() {
         var user = new User({
           username: username,
           password: password
         });
-
         user.save().then(function(newUser) {
           Users.add(newUser);
-          var token=new Token();
-          token.set('user_id',newUser.id);
-          token.save().then(function(token){
-            Tokens.add(token);
-            res.render('login');
-          });
+          res.render('login');
         });
-      }
-    });
-
-  res.render('login');
+      });
 });
 
-app.get('/links',
-function(req, res) {
+app.get('/links', restrict, function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
   });
 });
 
-app.post('/links',
-function(req, res) {
+app.post('/links', restrict, function(req, res) {
   var uri = req.body.url;
-
   if (!util.isValidUrl(uri)) {
     console.log('Not a valid url: ', uri);
     return res.send(404);

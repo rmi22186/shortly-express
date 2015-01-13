@@ -9,12 +9,8 @@ var User = db.Model.extend({
       bcrypt.genSalt(10, function(error, result) {
         model.set('salt', result);
         bcrypt.hash(model.get('password'), result, null, function(error, res) {
-          console.log('password pre salting' + model.get('password'));
-          console.log('salt pre saving (undefined)' + model.get('salt'));
           model.set('password', res);
-          console.log('password post salting' + model.get('password'));
           model.save();
-          console.log('salt post saving (SALT PLEASE)' + model.get('salt'));
         });
       });
     });

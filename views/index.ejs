@@ -4,7 +4,8 @@
     <li><a href='#' class='index'>All Links</a></li>
     <li><a href='#' class='create'>Shorten</a></li>
     <li><a href='#' class='login'>Login</a></li>
-    <li><a href='#' class='logout'>Logout</a></li>
+    //logout should not have an event click, just send to /logout, which deletes the session and redirects to login
+    <li><a href='/logout' class='logout'>Logout</a></li>
   </ul>
   </div>
   <div id='container'></div>
@@ -87,6 +88,8 @@
 <script src='/client/app.js'></script>
 <script src='/client/link.js'></script>
 <script src='/client/links.js'></script>
+<script src='/client/loginView.js'></script>
+
 <script src='/client/linkView.js'></script>
 <script src='/client/linksView.js'></script>
 <script src='/client/createLinkView.js'></script>
