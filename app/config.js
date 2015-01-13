@@ -62,6 +62,7 @@ db.knex.schema.hasTable('tokens').then(function(exists) {
       token.increments('id').primary();
       token.integer('user_id');
       token.integer('token');
+      token.integer('expiration');
       token.timestamps();
     }).then(function (table) {
       console.log('Created Tokens Table', table);

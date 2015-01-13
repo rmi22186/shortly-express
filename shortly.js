@@ -7,6 +7,8 @@ var bodyParser = require('body-parser');
 var db = require('./app/config');
 var Users = require('./app/collections/users');
 var User = require('./app/models/user');
+var Tokens = require('./app/collections/tokens');
+var Token = require('./app/models/token');
 var Links = require('./app/collections/links');
 var Link = require('./app/models/link');
 var Click = require('./app/models/click');
@@ -80,7 +82,12 @@ app.post('/signup',function(req,res){
 
       user.save().then(function(newUser) {
         Users.add(newUser);
-        res.send(200, newUser);
+        var token=new Token();
+        token.set('user_id',newUser.id);
+        token.save().then(function(token){
+          Tokens.add(token);
+          res.send(200, token.attributes.token);
+        });
       });
     }
   });
