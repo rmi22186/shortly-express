@@ -38,7 +38,53 @@ app.get('/login',function(req,res){
   res.render('login');
 });
 
+app.post('/login',function(req, res) {
+  var username=req.body.username;
+  var password=req.body.password;
+  //check for validity
+  //if credentials work
+  db.knex('users')
+    .where('username', '=', username)
+    .where('password', '=', password)
+    .then(function(result) {
+      //figure out error
+      res.redirect('/');
+    });
+
+    //redirect to URL page
+  //else
+    //try again...
+
+});
+
+
 app.get('/signup',function(req,res){
+  console.log(req.body);
+  res.render('signup');
+});
+
+app.post('/signup',function(req,res){
+  console.log(req.body);
+  var username=req.body.username;
+  var password=req.body.password;
+  //check for validity
+
+  new User({ username: username, password: password }).fetch().then(function(found) {
+    if (found) {
+      res.send(200, found.attributes);
+    } else {
+      var user = new User({
+        username: username,
+        password: password
+      });
+
+      user.save().then(function(newUser) {
+        Users.add(newUser);
+        res.send(200, newUser);
+      });
+    }
+  });
+
   res.render('signup');
 });
 
@@ -78,6 +124,8 @@ function(req, res) {
           Links.add(newLink);
           res.send(200, newLink);
         });
+
+
       });
     }
   });
