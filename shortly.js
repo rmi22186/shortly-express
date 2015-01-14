@@ -99,21 +99,20 @@ app.post('/signup',function(req,res){
   var password=req.body.password;
   //check for validity
   //create a new user, check is user was found
-  new User({
-      username: username
-    }).fetch().then(function(found) {
-        res.send(200, 'please choose a different username!');
-      })
-      .catch(function() {
-        var user = new User({
-          username: username,
-          password: password
-        });
-        user.save().then(function(newUser) {
-          Users.add(newUser);
-          res.render('login');
-        });
-      });
+  new User({ username: username }).fetch({require: true})
+  .then(function(found) {
+    res.send(200, 'please choose a different username!');
+  })
+  .catch(function() {
+    var user = new User({
+      username: username,
+      password: password
+    });
+    user.save().then(function(newUser) {
+      Users.add(newUser);
+      res.render('login');
+    });
+  });
 });
 
 app.get('/links', restrict, function(req, res) {

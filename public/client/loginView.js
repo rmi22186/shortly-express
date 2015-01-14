@@ -1,5 +1,3 @@
-//figure this out tomorrow
-
 Shortly.loginView = Backbone.View.extend({
   className: 'login',
 
